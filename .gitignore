@@ -1,8 +1,42 @@
-*.pyc
+# Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
+
+# Database
 db.sqlite3
-.venv/
+db.sqlite3-journal
+*.sqlite3
+*.db
+
+# Virtual Environments
 venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Environment variables & local settings
+.env
+.env.*
+local_settings.py
+
+# IDE & editors
 .vscode/
 .idea/
+*.sublime-workspace
+*.sublime-project
 .DS_Store
+Thumbs.db
+
+# Static / Media files in local dev
+media/
+staticfiles/
+
+# Logs
+*.log
+
+# Testing & Coverage
+.coverage
+htmlcov/
+.pytest_cache/

@@ -32,3 +32,4 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         if hasattr(obj, 'user'):
             return obj.user == request.user
         return False
+

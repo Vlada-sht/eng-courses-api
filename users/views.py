@@ -190,3 +190,4 @@ class CurrentUserBookingsAPIView(APIView):
                 "created_at": b.created_at.isoformat() if b.created_at else None
             })
         return Response(data, status=status.HTTP_200_OK)
+

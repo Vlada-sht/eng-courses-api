@@ -21,3 +21,4 @@ urlpatterns = [
     path('me/bookings/', CurrentUserBookingsAPIView.as_view(), name='user-me-bookings'),
     path('me/bookings', CurrentUserBookingsAPIView.as_view()),
 ]
+

@@ -1,0 +1,954 @@
+{
+  "info": {
+    "_postman_id": "eng-courses-api-collection-v2-1",
+    "name": "English Courses API",
+    "description": "Comprehensive Postman collection for English Courses REST API (Django REST Framework + SimpleJWT). Includes authentication, user profile, teachers, courses, lessons, bookings, and error handling examples.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "teacher_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "course_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "category_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "lesson_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "booking_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Users",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"vlada_student\",\n  \"email\": \"vlada@example.com\",\n  \"first_name\": \"Владислава\",\n  \"last_name\": \"Штомпіль\",\n  \"password\": \"SecurePassword123!\",\n  \"password_confirm\": \"SecurePassword123!\",\n  \"english_level\": \"B2\",\n  \"role\": \"student\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "register",
+                ""
+              ]
+            },
+            "description": "Register a new user account with validated username, email, and password confirmation."
+          },
+          "response": [
+            {
+              "name": "201 Created - Registration Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/register/"
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Користувача успішно зареєстровано.\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"vlada_student\",\n    \"email\": \"vlada@example.com\",\n    \"first_name\": \"Владислава\",\n    \"last_name\": \"Штомпіль\",\n    \"english_level\": \"B2\",\n    \"role\": \"student\",\n    \"phone\": null,\n    \"is_staff\": false,\n    \"date_joined\": \"2026-11-10T15:00:00Z\"\n  },\n  \"tokens\": {\n    \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjk5NjMzNjAwLCJ1c2VyX2lkIjoxfQ.signature\",\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcwMDIzODQwMCwidXNlcl9pZCI6MX0.signature\"\n  }\n}"
+            },
+            {
+              "name": "400 Bad Request - Validation Errors",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/register/"
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Помилка валідації при реєстрації користувача.\",\n  \"status_code\": 400,\n  \"details\": {\n    \"email\": [\n      \"Введіть коректну адресу електронної пошти (наприклад, name@example.com).\"\n    ],\n    \"password_confirm\": [\n      \"Паролі не збігаються.\"\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Login User (Obtain JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access) {",
+                  "    pm.collectionVariables.set('access_token', jsonData.access);",
+                  "    pm.environment.set('access_token', jsonData.access);",
+                  "}",
+                  "if (jsonData.refresh) {",
+                  "    pm.collectionVariables.set('refresh_token', jsonData.refresh);",
+                  "    pm.environment.set('refresh_token', jsonData.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"vlada_student\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "login",
+                ""
+              ]
+            },
+            "description": "Authenticate user with username or email and obtain JWT access & refresh tokens."
+          },
+          "response": [
+            {
+              "name": "200 OK - Login Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/login/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Вхід успішно виконано.\",\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjk5NjMzNjAwLCJ1c2VyX2lkIjoxfQ.signature\",\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcwMDIzODQwMCwidXNlcl9pZCI6MX0.signature\",\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"vlada_student\",\n    \"email\": \"vlada@example.com\",\n    \"first_name\": \"Владислава\",\n    \"last_name\": \"Штомпіль\",\n    \"english_level\": \"B2\",\n    \"role\": \"student\",\n    \"is_staff\": false\n  }\n}"
+            },
+            {
+              "name": "401 Unauthorized - Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/login/"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Невірне ім'я користувача (email) або пароль.\",\n  \"status_code\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/token/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "token",
+                "refresh",
+                ""
+              ]
+            },
+            "description": "Obtain a fresh access token using a valid refresh token."
+          },
+          "response": [
+            {
+              "name": "200 OK - Token Refreshed",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/token/refresh/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"access\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new_access_token\",\n  \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new_refresh_token\"\n}"
+            },
+            {
+              "name": "401 Unauthorized - Invalid/Expired Refresh Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/token/refresh/"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Недійсний або прострочений refresh токен.\",\n  \"status_code\": 401,\n  \"details\": \"Token is invalid or expired\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Current User Profile (Me)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/me/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                ""
+              ]
+            },
+            "description": "Get current authenticated user profile."
+          },
+          "response": [
+            {
+              "name": "200 OK - Profile Info",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/me/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 1,\n  \"username\": \"vlada_student\",\n  \"email\": \"vlada@example.com\",\n  \"first_name\": \"Владислава\",\n  \"last_name\": \"Штомпіль\",\n  \"english_level\": \"B2\",\n  \"role\": \"student\",\n  \"phone\": null,\n  \"is_staff\": false,\n  \"date_joined\": \"2026-11-10T15:00:00Z\"\n}"
+            },
+            {
+              "name": "401 Unauthorized - Missing Token",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": "{{base_url}}/api/users/me/"
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Автентифікаційні дані не надано.\",\n  \"details\": \"Authentication credentials were not provided.\",\n  \"status_code\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update User Profile (Me)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Влада\",\n  \"last_name\": \"Штомпіль\",\n  \"english_level\": \"C1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/me/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "me",
+                ""
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Profile Updated",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{access_token}}"
+                  }
+                ],
+                "url": "{{base_url}}/api/users/me/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Профіль успішно оновлено.\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"vlada_student\",\n    \"email\": \"vlada@example.com\",\n    \"first_name\": \"Влада\",\n    \"last_name\": \"Штомпіль\",\n    \"english_level\": \"C1\",\n    \"role\": \"student\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Logout User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/logout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "users",
+                "logout",
+                ""
+              ]
+            },
+            "description": "Log out from the server and blacklist refresh token."
+          },
+          "response": [
+            {
+              "name": "200 OK - Logout Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{base_url}}/api/users/logout/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Успішний вихід із системи. Токени видалено.\",\n  \"status_code\": 200\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Teachers & Profiles",
+      "item": [
+        {
+          "name": "Get Teachers List (with query filters)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teachers/?specialization=IELTS&english_level=C2",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "specialization",
+                  "value": "IELTS",
+                  "description": "Filter by specialization"
+                },
+                {
+                  "key": "english_level",
+                  "value": "C2",
+                  "description": "Filter by English level"
+                },
+                {
+                  "key": "search",
+                  "value": "Lily",
+                  "disabled": true,
+                  "description": "Search by name or bio"
+                }
+              ]
+            },
+            "description": "List teachers with optional filter by specialization and english level."
+          },
+          "response": [
+            {
+              "name": "200 OK - List of Teachers",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/api/teachers/?specialization=IELTS&english_level=C2"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Lily Snape\",\n    \"email\": \"lily@example.com\",\n    \"bio\": \"CELTA certified tutor with 5 years of experience\",\n    \"specialization\": \"IELTS Prep\",\n    \"price_per_hour\": \"450.00\",\n    \"rating\": \"4.95\",\n    \"english_level\": \"C2\",\n    \"experience_years\": 5,\n    \"courses_count\": 2\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Teacher Detailed Profile",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teachers/{{teacher_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "{{teacher_id}}",
+                ""
+              ]
+            },
+            "description": "Retrieve detailed profile information of a teacher including their courses, upcoming lessons, bio, price, and english_level."
+          },
+          "response": [
+            {
+              "name": "200 OK - Teacher Detailed Profile",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/api/teachers/1/"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 1,\n  \"name\": \"Lily Snape\",\n  \"email\": \"lily@example.com\",\n  \"bio\": \"CELTA certified tutor with 5 years of experience\",\n  \"specialization\": \"IELTS Prep\",\n  \"price_per_hour\": \"450.00\",\n  \"rating\": \"4.95\",\n  \"english_level\": \"C2\",\n  \"experience_years\": 5,\n  \"courses_count\": 2,\n  \"lessons_count\": 3,\n  \"courses\": [\n    {\n      \"id\": 1,\n      \"title\": \"IELTS Academic Masterclass\",\n      \"level\": \"B2\",\n      \"english_level\": \"B2\",\n      \"price\": \"2500.00\"\n    }\n  ],\n  \"lessons\": [\n    {\n      \"id\": 1,\n      \"teacher\": 1,\n      \"teacher_name\": \"Lily Snape\",\n      \"course\": 1,\n      \"course_title\": \"IELTS Academic Masterclass\",\n      \"title\": \"Speaking Practice: Part 2 & 3\",\n      \"lesson_type\": \"Speaking Club\",\n      \"english_level\": \"B2\",\n      \"date\": \"2026-11-25\",\n      \"time\": \"16:00:00\",\n      \"duration_minutes\": 60,\n      \"price\": \"350.00\",\n      \"status\": \"scheduled\",\n      \"description\": \"Live interactive speaking session\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "404 Not Found - Teacher Profile Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/api/teachers/999/"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Викладача не знайдено\",\n  \"status_code\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Teacher Lessons by ID & Lesson Type",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/teachers/{{teacher_id}}/lessons/?lesson_type=Speaking Club",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "{{teacher_id}}",
+                "lessons",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "lesson_type",
+                  "value": "Speaking Club",
+                  "description": "Filter by lesson type"
+                },
+                {
+                  "key": "english_level",
+                  "value": "B2",
+                  "disabled": true,
+                  "description": "Filter by level"
+                }
+              ]
+            },
+            "description": "Specific endpoint to retrieve lessons belonging to a specific teacher filtered by lesson_type."
+          },
+          "response": [
+            {
+              "name": "200 OK - Teacher Lessons List",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/api/teachers/1/lessons/?lesson_type=Speaking Club"
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"teacher_id\": 1,\n  \"teacher_name\": \"Lily Snape\",\n  \"count\": 1,\n  \"lessons\": [\n    {\n      \"id\": 1,\n      \"teacher\": 1,\n      \"teacher_name\": \"Lily Snape\",\n      \"course\": 1,\n      \"course_title\": \"IELTS Academic Masterclass\",\n      \"title\": \"Speaking Practice: Part 2 & 3\",\n      \"lesson_type\": \"Speaking Club\",\n      \"english_level\": \"B2\",\n      \"date\": \"2026-11-25\",\n      \"time\": \"16:00:00\",\n      \"duration_minutes\": 60,\n      \"price\": \"350.00\",\n      \"status\": \"scheduled\",\n      \"description\": \"Live interactive speaking club\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "404 Not Found - Teacher Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "url": "{{base_url}}/api/teachers/999/lessons/"
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Викладача не знайдено\",\n  \"status_code\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Teacher",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Native speaker from London with 7 years teaching Business English\",\n  \"specialization\": \"Business English\",\n  \"price_per_hour\": 550.0,\n  \"rating\": 5.0,\n  \"english_level\": \"Native\",\n  \"experience_years\": 7\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/teachers/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                ""
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "201 Created - Teacher Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 2,\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"bio\": \"Native speaker from London with 7 years teaching Business English\",\n  \"specialization\": \"Business English\",\n  \"price_per_hour\": \"550.00\",\n  \"rating\": \"5.00\",\n  \"english_level\": \"Native\",\n  \"experience_years\": 7,\n  \"courses_count\": 0\n}"
+            },
+            {
+              "name": "401 Unauthorized - Token Missing",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Автентифікаційні дані не надано.\",\n  \"status_code\": 401\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Teacher (409 Conflict Example)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/teachers/{{teacher_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "teachers",
+                "{{teacher_id}}",
+                ""
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "409 Conflict - Teacher Has Dependent Courses/Lessons",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Неможливо видалити викладача, оскільки за ним закріплено курсів: 1, занять: 2.\",\n  \"status_code\": 409,\n  \"details\": {\n    \"courses_count\": 1,\n    \"lessons_count\": 2\n  }\n}"
+            },
+            {
+              "name": "204 No Content - Deleted",
+              "status": "No Content",
+              "code": 204,
+              "_postman_previewlanguage": "json",
+              "body": ""
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Categories & Courses",
+      "item": [
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/categories/"
+          },
+          "response": [
+            {
+              "name": "200 OK - Categories List",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Exam Prep\",\n    \"description\": \"IELTS, TOEFL, Duolingo\",\n    \"courses_count\": 3\n  },\n  {\n    \"id\": 2,\n    \"name\": \"Speaking Clubs\",\n    \"description\": \"Conversational practice with natives\",\n    \"courses_count\": 5\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Grammar & Writing\",\n  \"description\": \"Academic and everyday grammar\"\n}"
+            },
+            "url": "{{base_url}}/api/categories/"
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 3,\n  \"name\": \"Grammar & Writing\",\n  \"description\": \"Academic and everyday grammar\",\n  \"courses_count\": 0\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Category (409 Conflict Example)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/categories/{{category_id}}/"
+          },
+          "response": [
+            {
+              "name": "409 Conflict - Category Has Linked Courses",
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Неможливо видалити категорію, оскільки до неї прив'язано курсів: 3.\",\n  \"status_code\": 409,\n  \"details\": {\n    \"linked_courses\": 3\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get All Courses (with filters)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/courses/?english_level=B2&category_id=1",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "english_level",
+                  "value": "B2",
+                  "description": "Filter by target English level"
+                },
+                {
+                  "key": "category_id",
+                  "value": "1",
+                  "description": "Filter by category ID"
+                },
+                {
+                  "key": "teacher_id",
+                  "value": "1",
+                  "disabled": true,
+                  "description": "Filter by teacher ID"
+                },
+                {
+                  "key": "search",
+                  "value": "Masterclass",
+                  "disabled": true,
+                  "description": "Search keyword"
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Courses List",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": 1,\n    \"title\": \"IELTS Academic Masterclass\",\n    \"description\": \"Comprehensive preparation course for IELTS\",\n    \"level\": \"B2\",\n    \"english_level\": \"B2\",\n    \"price\": \"2500.00\",\n    \"category\": 1,\n    \"teacher\": 1,\n    \"category_name\": \"Exam Prep\",\n    \"teacher_name\": \"Lily Snape\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Course",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Business English for IT Specialists\",\n  \"description\": \"Learn professional vocabulary, standup presentations, and tech emails\",\n  \"level\": \"B2\",\n  \"english_level\": \"B2\",\n  \"price\": 3200.0,\n  \"category\": 1,\n  \"teacher\": 1\n}"
+            },
+            "url": "{{base_url}}/api/courses/"
+          },
+          "response": [
+            {
+              "name": "201 Created - Course Created",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 2,\n  \"title\": \"Business English for IT Specialists\",\n  \"description\": \"Learn professional vocabulary, standup presentations, and tech emails\",\n  \"level\": \"B2\",\n  \"english_level\": \"B2\",\n  \"price\": \"3200.00\",\n  \"category\": 1,\n  \"teacher\": 1,\n  \"category_name\": \"Exam Prep\",\n  \"teacher_name\": \"Lily Snape\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Lessons & Bookings",
+      "item": [
+        {
+          "name": "Get All Lessons (Filter by Teacher & Type)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/lessons/?teacher_id=1&lesson_type=Speaking Club",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "lessons",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "teacher_id",
+                  "value": "1"
+                },
+                {
+                  "key": "lesson_type",
+                  "value": "Speaking Club"
+                },
+                {
+                  "key": "english_level",
+                  "value": "B2",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": [
+            {
+              "name": "200 OK - Lessons List",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"id\": 1,\n    \"teacher\": 1,\n    \"teacher_name\": \"Lily Snape\",\n    \"course\": 1,\n    \"course_title\": \"IELTS Academic Masterclass\",\n    \"title\": \"Speaking Practice: Part 2 & 3\",\n    \"lesson_type\": \"Speaking Club\",\n    \"english_level\": \"B2\",\n    \"date\": \"2026-11-25\",\n    \"time\": \"16:00:00\",\n    \"duration_minutes\": 60,\n    \"price\": \"350.00\",\n    \"status\": \"scheduled\",\n    \"description\": \"Weekly speaking club session\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Booking (Book Lesson)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacher_id\": 1,\n  \"date\": \"2026-11-25\",\n  \"time\": \"16:00\",\n  \"lesson_type\": \"Speaking Club\",\n  \"lesson_id\": 1,\n  \"notes\": \"I would like to focus on fluency and pronunciation\"\n}"
+            },
+            "url": "{{base_url}}/api/bookings/"
+          },
+          "response": [
+            {
+              "name": "201 Created - Booking Confirmed",
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"id\": 1,\n  \"booking_id\": 1,\n  \"teacher_id\": 1,\n  \"teacher_name\": \"Lily Snape\",\n  \"date\": \"2026-11-25\",\n  \"time\": \"16:00:00\",\n  \"lesson_type\": \"Speaking Club\",\n  \"status\": \"confirmed\",\n  \"message\": \"Заняття успішно заброньовано\"\n}"
+            },
+            {
+              "name": "401 Unauthorized - Authentication Required",
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Автентифікаційні дані не надано.\",\n  \"status_code\": 401\n}"
+            },
+            {
+              "name": "404 Not Found - Teacher Does Not Exist",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"error\": \"Викладача з вказаним ID не знайдено.\",\n  \"status_code\": 404\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Bookings (/api/users/me/bookings/)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/users/me/bookings/"
+          },
+          "response": [
+            {
+              "name": "200 OK - User's Bookings",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "[\n  {\n    \"booking_id\": 1,\n    \"id\": 1,\n    \"teacher_id\": 1,\n    \"teacher_name\": \"Lily Snape\",\n    \"date\": \"2026-11-25\",\n    \"time\": \"16:00:00\",\n    \"lesson_type\": \"Speaking Club\",\n    \"status\": \"confirmed\",\n    \"notes\": \"I would like to focus on fluency and pronunciation\",\n    \"created_at\": \"2026-11-10T16:00:00Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Cancel Booking",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}"
+              }
+            ],
+            "url": "{{base_url}}/api/bookings/{{booking_id}}/"
+          },
+          "response": [
+            {
+              "name": "200 OK - Booking Cancelled",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"message\": \"Бронювання успішно скасовано.\",\n  \"booking_id\": 1,\n  \"status\": \"cancelled\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>English Courses Platform</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="logo" onclick="navigateTo('home')">
+        <span class="logo-badge">EN</span>
+        <span class="logo-text">English Courses API</span>
+      </div>
+      <nav class="nav-links">
+        <button class="nav-btn" onclick="navigateTo('home')" id="navHome">Головна & Каталог</button>
+        <button class="nav-btn protected-link" onclick="navigateTo('dashboard')" id="navDashboard">Особистий кабінет</button>
+      </nav>
+      <div class="auth-controls" id="authControls">
+        <!-- Injected via JS based on auth state -->
+      </div>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div id="alertBox" class="alert-box hidden"></div>
+
+    <!-- 1. PUBLIC CATALOG PAGE -->
+    <section id="pageHome" class="page-section">
+      <div class="hero-banner">
+        <h1>Знайдіть свого ідеального викладача англійської</h1>
+        <p>Індивідуальні заняття, розмовні клуби та підготовка до міжнародних іспитів IELTS/TOEFL</p>
+      </div>
+
+      <div class="filters-card">
+        <div class="filter-group">
+          <label for="filterSpecialization">Напрямок навчання:</label>
+          <select id="filterSpecialization" onchange="loadTeachers()">
+            <option value="">Всі напрямки</option>
+            <option value="IELTS Prep">IELTS / TOEFL Prep</option>
+            <option value="Speaking Club">Speaking Club</option>
+            <option value="Business English">Business English</option>
+            <option value="General English">General English</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label for="filterLevel">Рівень англійської (english_level):</label>
+          <select id="filterLevel" onchange="loadTeachers()">
+            <option value="">Всі рівні</option>
+            <option value="A1">A1 (Beginner)</option>
+            <option value="A2">A2 (Elementary)</option>
+            <option value="B1">B1 (Intermediate)</option>
+            <option value="B2">B2 (Upper-Intermediate)</option>
+            <option value="C1">C1 (Advanced)</option>
+            <option value="C2">C2 (Proficiency)</option>
+            <option value="Native">Native Speaker</option>
+          </select>
+        </div>
+
+        <button class="btn btn-secondary" onclick="resetFilters()">Скинути фільтри</button>
+      </div>
+
+      <h2>Викладачі платформи</h2>
+      <div id="teachersGrid" class="cards-grid">
+        <div class="loading-spinner">Завантаження викладачів...</div>
+      </div>
+
+      <h2 style="margin-top: 40px;">Популярні курси</h2>
+      <div id="coursesGrid" class="cards-grid">
+        <div class="loading-spinner">Завантаження курсів...</div>
+      </div>
+    </section>
+
+    <!-- 2. LOGIN PAGE -->
+    <section id="pageLogin" class="page-section hidden">
+      <div class="auth-card">
+        <h2>Вхід у систему</h2>
+        <p class="auth-subtitle">Введіть свої облікові дані для доступу</p>
+
+        <form id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginUsername">Логін (username) або Email</label>
+            <input type="text" id="loginUsername" required placeholder="vlada або vlada@example.com">
+          </div>
+
+          <div class="form-group">
+            <label for="loginPassword">Пароль</label>
+            <input type="password" id="loginPassword" required placeholder="Введіть пароль">
+          </div>
+
+          <div id="loginError" class="field-error hidden"></div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="loginBtn">Увійти</button>
+        </form>
+
+        <p class="auth-footer">
+          Не маєте акаунта? <a href="javascript:void(0)" onclick="navigateTo('register')">Зареєструватися</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 3. REGISTRATION PAGE -->
+    <section id="pageRegister" class="page-section hidden">
+      <div class="auth-card auth-card-wide">
+        <h2>Реєстрація студента</h2>
+        <p class="auth-subtitle">Створіть свій профіль для бронювання занять</p>
+
+        <form id="registerForm" onsubmit="handleRegister(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="regUsername">Username <span class="req">*</span></label>
+              <input type="text" id="regUsername" required placeholder="наприклад: vlada_sht">
+              <span class="field-error" id="err_username"></span>
+            </div>
+            <div class="form-group">
+              <label for="regEmail">Email <span class="req">*</span></label>
+              <input type="email" id="regEmail" required placeholder="name@example.com">
+              <span class="field-error" id="err_email"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="regFirstName">Ім'я (first name)</label>
+              <input type="text" id="regFirstName" placeholder="Владислава">
+              <span class="field-error" id="err_first_name"></span>
+            </div>
+            <div class="form-group">
+              <label for="regLastName">Прізвище (last name)</label>
+              <input type="text" id="regLastName" placeholder="Штомпіль">
+              <span class="field-error" id="err_last_name"></span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="regPassword">Пароль <span class="req">*</span> (мін. 8 симв., літери та цифри)</label>
+              <input type="password" id="regPassword" required placeholder="Придумайте пароль">
+              <span class="field-error" id="err_password"></span>
+            </div>
+            <div class="form-group">
+              <label for="regPasswordConfirm">Підтвердження пароля <span class="req">*</span></label>
+              <input type="password" id="regPasswordConfirm" required placeholder="Повторіть пароль">
+              <span class="field-error" id="err_password_confirm"></span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regEnglishLevel">Ваш поточний рівень англійської (english_level)</label>
+            <select id="regEnglishLevel">
+              <option value="A1">A1 — Beginner</option>
+              <option value="A2">A2 — Elementary</option>
+              <option value="B1">B1 — Intermediate</option>
+              <option value="B2" selected>B2 — Upper-Intermediate</option>
+              <option value="C1">C1 — Advanced</option>
+              <option value="C2">C2 — Proficiency</option>
+            </select>
+          </div>
+
+          <div id="generalRegisterError" class="field-error hidden"></div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="registerBtn">Зареєструватися</button>
+        </form>
+
+        <p class="auth-footer">
+          Вже є акаунт? <a href="javascript:void(0)" onclick="navigateTo('login')">Увійти</a>
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. PROTECTED USER DASHBOARD -->
+    <section id="pageDashboard" class="page-section hidden">
+      <div class="dashboard-header">
+        <div>
+          <h1>Особистий кабінет студента</h1>
+          <p class="text-muted">Керуйте своїми заняттями та бронюваннями</p>
+        </div>
+        <button class="btn btn-primary" onclick="openBookingModal()">+ Забронювати нове заняття</button>
+      </div>
+
+      <div class="dashboard-grid">
+        <!-- User info card -->
+        <div class="profile-card">
+          <h3>Мій профіль</h3>
+          <div class="profile-item"><strong>Логін:</strong> <span id="profUsername">-</span></div>
+          <div class="profile-item"><strong>Email:</strong> <span id="profEmail">-</span></div>
+          <div class="profile-item"><strong>Ім'я:</strong> <span id="profFullName">-</span></div>
+          <div class="profile-item"><strong>Рівень:</strong> <span class="badge" id="profLevel">B2</span></div>
+          <div class="profile-item"><strong>Роль:</strong> <span id="profRole">student</span></div>
+        </div>
+
+        <!-- Bookings list -->
+        <div class="bookings-card">
+          <h3>Мої заброньовані заняття (/api/users/me/bookings/)</h3>
+          <div id="bookingsList" class="bookings-list">
+            <div class="loading-spinner">Завантаження бронювань...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL: TEACHER PROFILE -->
+  <div id="teacherModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="modalTeacherName">Профіль викладача</h2>
+        <button class="close-btn" onclick="closeTeacherModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalTeacherBody">
+        <div class="loading-spinner">Завантаження даних...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BOOKING FORM -->
+  <div id="bookingModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Забронювати урок</h2>
+        <button class="close-btn" onclick="closeBookingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="bookingForm" onsubmit="handleCreateBooking(event)">
+          <div class="form-group">
+            <label for="bookTeacherSelect">Оберіть викладача <span class="req">*</span></label>
+            <select id="bookTeacherSelect" required onchange="onTeacherSelectChange()">
+              <option value="">Завантаження списку...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="bookLessonType">Тип заняття (lesson_type) <span class="req">*</span></label>
+            <select id="bookLessonType" required>
+              <option value="Speaking Club">Speaking Club (Розмовний клуб)</option>
+              <option value="Individual">Індивідуальний урок</option>
+              <option value="IELTS Prep">Підготовка до IELTS</option>
+              <option value="Business English">Business English</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="bookDate">Дата <span class="req">*</span></label>
+              <input type="date" id="bookDate" required>
+            </div>
+            <div class="form-group">
+              <label for="bookTime">Час <span class="req">*</span></label>
+              <input type="time" id="bookTime" required value="17:00">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="bookNotes">Побажання до уроку (опціонально)</label>
+            <textarea id="bookNotes" rows="2" placeholder="Наприклад, акцент на говорінні чи граматиці"></textarea>
+          </div>
+
+          <div id="bookingError" class="field-error hidden"></div>
+
+          <button type="submit" class="btn btn-primary btn-block" id="submitBookingBtn">Підтвердити бронювання</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -40,3 +40,7 @@ staticfiles/
 .coverage
 htmlcov/
 .pytest_cache/
+
+.env
+logs/
+.coverage

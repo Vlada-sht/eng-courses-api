@@ -746,3 +746,74 @@ erDiagram
 ```
 
 ![Схема бази даних](./db_schema.png)
+
+---
+
+## Налаштування локального середовища та секретів (`.env`)
+
+1. Клонуйте репозиторій та створіть віртуальне середовище:
+   ```bash
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # Linux / macOS:
+   source venv/bin/activate
+
+## Встановіть залежності проєкту:
+python -m pip install -r requirements.txt
+
+## Створіть файл .env у корені проєкту на основі шаблону .env.example
+cp .env.example .env
+cp .env.example .env
+Необхідні змінні середовища:
+
+SECRET_KEY — секретний ключ Django-проєкту;
+
+DEBUG — режим налагодження (True або False);
+
+ALLOWED_HOSTS — список дозволених хостів через кому (наприклад, 127.0.0.1,localhost);
+
+DB_NAME — назва файлу бази даних SQLite (за замовчуванням db.sqlite3);
+
+JWT_ACCESS_MINUTES — час життя access-токена у хвилинах;
+
+JWT_REFRESH_DAYS — час життя refresh-токена у днях;
+
+CORS_ALLOW_ALL_ORIGINS — дозвіл CORS-запитів (True/False).
+
+## Виконайте міграції та запустіть сервер:
+
+python manage.py migrate
+python manage.py runserver
+
+```
+
+---
+
+## Документація API (OpenAPI / Swagger)
+
+Автоматична генерація документації реалізована за допомогою `drf-spectacular`. Після запуску сервера документація доступна за посиланнями:
+
+- **Swagger UI (інтерактивна документація):** [http://127.0.0.1:8000/api/docs/](http://127.0.0.1:8000/api/docs/)
+- **ReDoc:** [http://127.0.0.1:8000/api/redoc/](http://127.0.0.1:8000/api/redoc/)
+- **Отримання OpenAPI-схеми (YAML/JSON):** [http://127.0.0.1:8000/api/schema/](http://127.0.0.1:8000/api/schema/)
+
+Згенерувати файл OpenAPI-схеми локально можна командою:
+```bash
+python manage.py spectacular --file schema.yml
+```
+
+---
+
+## Запуск автоматизованих тестів та вимірювання покриття
+
+Запуск усіх тестів:
+```bash
+python manage.py test
+```
+
+Замір відсотка покриття коду тестами (`coverage.py`):
+```bash
+python -m coverage run --source='courses,users,config' manage.py test
+python -m coverage report -m
+```

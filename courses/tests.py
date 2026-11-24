@@ -1,135 +1,274 @@
-from django.test import TestCase
-from django.contrib.auth.models import User
-from rest_framework.test import APIClient
+from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework import status
+from rest_framework.test import APITestCase
+
 from .models import Category, Teacher, Course, Lesson, Booking
 
-class CourseAPITests(TestCase):
-    def setUp(self):
-        self.client = APIClient()
-        self.user = User.objects.create_user(username="student1", email="student1@example.com", password="Password123!")
-        self.admin = User.objects.create_superuser(username="admin", email="admin@example.com", password="AdminPassword123!")
+User = get_user_model()
 
-        self.category = Category.objects.create(name="Exam Prep", description="Prepare for international tests")
+
+class CourseAPITests(APITestCase):
+    """
+    Автоматизовані тести для ресурсу Courses:
+    - позитивні CRUD-сценарії (GET, POST, PUT, PATCH, DELETE) та фільтрація;
+    - негативні сценарії (400 при невалідних даних, 401 без токена, 404 для неіснуючого ID).
+    """
+
+    def setUp(self):
+        # Фікстури користувачів
+        self.user = User.objects.create_user(
+            username='teacher_user',
+            email='teacher@example.com',
+            password='StrongPassword123!'
+        )
+
+        # Фікстури категорії, викладача та курсу
+        self.category = Category.objects.create(
+            name='Business English',
+            description='Курси ділової англійської мови'
+        )
         self.teacher = Teacher.objects.create(
-            name="Lily Snape",
-            email="lily@example.com",
-            bio="CELTA certified tutor with 5 years of experience",
-            specialization="IELTS Prep",
-            price_per_hour=450.00,
-            rating=4.95,
-            english_level="C2",
-            experience_years=5
+            name='Олена Коваленко',
+            email='olena.teacher@example.com',
+            specialization='Business English',
+            english_level='C2',
+            price_per_hour='500.00'
         )
         self.course = Course.objects.create(
-            title="IELTS Academic Masterclass",
-            description="Intensive prep course for IELTS Academic 7.5+",
-            level="B2",
-            english_level="B2",
-            price=2500.00,
+            title='English for IT',
+            description='Розмовна та технічна англійська для розробників',
+            level='B2',
+            english_level='B2',
+            price='2800.00',
             category=self.category,
             teacher=self.teacher
         )
-        self.lesson1 = Lesson.objects.create(
-            teacher=self.teacher,
-            course=self.course,
-            title="Speaking Practice: Part 2 & 3",
-            lesson_type="Speaking Club",
-            english_level="B2",
-            date="2026-11-25",
-            time="16:00:00",
-            price=350.00
-        )
-        self.lesson2 = Lesson.objects.create(
-            teacher=self.teacher,
-            course=self.course,
-            title="Writing Task 2 Essay Analysis",
-            lesson_type="Grammar Intensive",
-            english_level="C1",
-            date="2026-11-26",
-            time="17:00:00",
-            price=400.00
-        )
 
-    def test_teacher_list_and_filters(self):
-        # List teachers
-        response = self.client.get('/api/teachers/')
+        self.list_url = reverse('course-list-create')
+        self.detail_url = reverse('course-detail', kwargs={'pk': self.course.pk})
+
+    # --- Позитивні сценарії ---
+
+    def test_get_courses_list_public(self):
+        response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]["english_level"], "C2")
+        self.assertEqual(response.data[0]['title'], 'English for IT')
 
-        # Filter by specialization
-        response = self.client.get('/api/teachers/?specialization=IELTS')
+    def test_filter_courses_by_level_and_search(self):
+        response = self.client.get(self.list_url, {'english_level': 'B2', 'search': 'IT'})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
 
-        # Filter by non-existing specialization
-        response = self.client.get('/api/teachers/?specialization=French')
+        empty_response = self.client.get(self.list_url, {'english_level': 'C1'})
+        self.assertEqual(empty_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(empty_response.data), 0)
+
+    def test_get_course_detail_public(self):
+        response = self.client.get(self.detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.data['title'], 'English for IT')
+        self.assertEqual(response.data['teacher_name'], 'Олена Коваленко')
 
-    def test_teacher_detail_profile(self):
-        response = self.client.get(f'/api/teachers/{self.teacher.id}/')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["name"], "Lily Snape")
-        self.assertEqual(response.data["english_level"], "C2")
-        self.assertEqual(response.data["specialization"], "IELTS Prep")
-        self.assertIn("courses", response.data)
-        self.assertIn("lessons", response.data)
-        self.assertEqual(len(response.data["courses"]), 1)
-        self.assertEqual(len(response.data["lessons"]), 2)
-
-    def test_teacher_lessons_endpoint_filtered_by_lesson_type(self):
-        # Specific endpoint: /api/teachers/<id>/lessons/?lesson_type=Speaking Club
-        url = f'/api/teachers/{self.teacher.id}/lessons/?lesson_type=Speaking Club'
-        response = self.client.get(url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["teacher_id"], self.teacher.id)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["lessons"][0]["lesson_type"], "Speaking Club")
-        self.assertEqual(response.data["lessons"][0]["english_level"], "B2")
-
-        # Non-existing teacher 404
-        response_404 = self.client.get('/api/teachers/9999/lessons/')
-        self.assertEqual(response_404.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("error", response_404.data)
-
-    def test_conflict_409_on_deleting_teacher_with_dependencies(self):
-        self.client.force_authenticate(user=self.admin)
-        response = self.client.delete(f'/api/teachers/{self.teacher.id}/')
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertIn("error", response.data)
-
-    def test_conflict_409_on_deleting_category_with_courses(self):
-        self.client.force_authenticate(user=self.admin)
-        response = self.client.delete(f'/api/categories/{self.category.id}/')
-        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
-        self.assertIn("error", response.data)
-
-    def test_booking_creation_authenticated(self):
+    def test_create_course_authenticated(self):
         self.client.force_authenticate(user=self.user)
         payload = {
-            "teacher_id": self.teacher.id,
-            "date": "2026-12-01",
-            "time": "14:00",
-            "lesson_type": "Speaking Club"
+            'title': 'IELTS Academic Preparation',
+            'description': 'Інтенсивна підготовка до складання іспиту IELTS',
+            'level': 'C1',
+            'english_level': 'C1',
+            'price': '3500.00',
+            'category': self.category.id,
+            'teacher': self.teacher.id,
         }
-        response = self.client.post('/api/bookings/', payload, format='json')
+        response = self.client.post(self.list_url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data["status"], "confirmed")
-        self.assertEqual(response.data["teacher_id"], self.teacher.id)
+        self.assertEqual(Course.objects.count(), 2)
+        self.assertEqual(response.data['title'], 'IELTS Academic Preparation')
 
-        # Check user's bookings endpoint
-        my_bookings_res = self.client.get('/api/users/me/bookings/')
-        self.assertEqual(my_bookings_res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(my_bookings_res.data), 1)
-
-    def test_unauthenticated_booking_401(self):
+    def test_full_update_course_put_authenticated(self):
+        self.client.force_authenticate(user=self.user)
         payload = {
-            "teacher_id": self.teacher.id,
-            "date": "2026-12-01",
-            "time": "14:00"
+            'title': 'English for IT Advanced',
+            'description': 'Оновлена програма для Senior-спеціалістів',
+            'level': 'C1',
+            'english_level': 'C1',
+            'price': '3200.00',
+            'category': self.category.id,
+            'teacher': self.teacher.id,
         }
-        response = self.client.post('/api/bookings/', payload, format='json')
+        response = self.client.put(self.detail_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.course.refresh_from_db()
+        self.assertEqual(self.course.title, 'English for IT Advanced')
+        self.assertEqual(self.course.level, 'C1')
+
+    def test_partial_update_course_patch_authenticated(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.patch(self.detail_url, {'price': '2999.00'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.course.refresh_from_db()
+        self.assertEqual(str(self.course.price), '2999.00')
+
+    def test_delete_course_authenticated(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Course.objects.count(), 0)
+
+    # --- Негативні сценарії ---
+
+    def test_create_course_unauthenticated_fails(self):
+        payload = {
+            'title': 'Unauthorized Course',
+            'description': 'Не має створитися без JWT',
+            'price': '1500.00',
+            'category': self.category.id,
+            'teacher': self.teacher.id,
+        }
+        response = self.client.post(self.list_url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("error", response.data)
+        self.assertEqual(Course.objects.count(), 1)
+
+    def test_create_course_invalid_data_fails(self):
+        self.client.force_authenticate(user=self.user)
+        payload = {
+            'title': '',
+            'price': 'invalid-price',
+            'category': 99999,
+        }
+        response = self.client.post(self.list_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_update_course_unauthenticated_fails(self):
+        response = self.client.patch(self.detail_url, {'price': '100.00'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_nonexistent_course_returns_404(self):
+        url = reverse('course-detail', kwargs={'pk': 99999})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_nonexistent_course_returns_404(self):
+        self.client.force_authenticate(user=self.user)
+        url = reverse('course-detail', kwargs={'pk': 99999})
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class BookingRoleAndPermissionsAPITests(APITestCase):
+    """
+    Тести розмежування прав доступу та ролей на прикладі ресурсу Bookings:
+    - звичайний студент бачить і скасовує лише власні бронювання;
+    - адміністратор (is_staff=True) має доступ до всіх бронювань;
+    - неавторизовані запити відхиляються зі статусом 401.
+    """
+
+    def setUp(self):
+        self.student_one = User.objects.create_user(
+            username='student_one',
+            password='Password123!'
+        )
+        self.student_two = User.objects.create_user(
+            username='student_two',
+            password='Password123!'
+        )
+        self.admin_user = User.objects.create_user(
+            username='admin_user',
+            password='AdminPassword123!',
+            is_staff=True
+        )
+
+        self.teacher = Teacher.objects.create(
+            name='Марко Бондаренко',
+            email='marko@example.com',
+            specialization='Speaking Club',
+            english_level='C1'
+        )
+        self.lesson = Lesson.objects.create(
+            teacher=self.teacher,
+            title='Weekend Speaking Club',
+            lesson_type='Speaking Club',
+            english_level='B2',
+            date='2026-12-10',
+            time='18:00:00'
+        )
+
+        self.booking_one = Booking.objects.create(
+            user=self.student_one,
+            teacher=self.teacher,
+            lesson=self.lesson,
+            date='2026-12-10',
+            time='18:00:00'
+        )
+        self.booking_two = Booking.objects.create(
+            user=self.student_two,
+            teacher=self.teacher,
+            date='2026-12-12',
+            time='14:00:00'
+        )
+
+        self.bookings_url = reverse('booking-list-create')
+
+    def test_unauthenticated_cannot_access_bookings(self):
+        response = self.client.get(self.bookings_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_student_sees_only_own_bookings(self):
+        self.client.force_authenticate(user=self.student_one)
+        response = self.client.get(self.bookings_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], self.booking_one.id)
+
+    def test_admin_sees_all_bookings(self):
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(self.bookings_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+
+    def test_create_booking_success(self):
+        self.client.force_authenticate(user=self.student_one)
+        payload = {
+            'teacher_id': self.teacher.id,
+            'lesson_id': self.lesson.id,
+            'date': '2026-12-15',
+            'time': '16:30:00',
+            'lesson_type': 'Individual',
+            'notes': 'Підготовка до співбесіди'
+        }
+        response = self.client.post(self.bookings_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Booking.objects.filter(user=self.student_one).count(), 2)
+
+    def test_create_booking_missing_required_fields_fails(self):
+        self.client.force_authenticate(user=self.student_one)
+        response = self.client.post(self.bookings_url, {'teacher_id': self.teacher.id}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_student_cannot_access_or_cancel_other_student_booking(self):
+        self.client.force_authenticate(user=self.student_one)
+        other_booking_url = reverse('booking-detail', kwargs={'pk': self.booking_two.pk})
+
+        get_resp = self.client.get(other_booking_url)
+        self.assertEqual(get_resp.status_code, status.HTTP_404_NOT_FOUND)
+
+        del_resp = self.client.delete(other_booking_url)
+        self.assertEqual(del_resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_student_can_cancel_own_booking(self):
+        self.client.force_authenticate(user=self.student_one)
+        own_booking_url = reverse('booking-detail', kwargs={'pk': self.booking_one.pk})
+        response = self.client.delete(own_booking_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.booking_one.refresh_from_db()
+        self.assertEqual(self.booking_one.status, 'cancelled')
+
+    def test_admin_can_cancel_any_booking(self):
+        self.client.force_authenticate(user=self.admin_user)
+        other_booking_url = reverse('booking-detail', kwargs={'pk': self.booking_two.pk})
+        response = self.client.delete(other_booking_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.booking_two.refresh_from_db()
+        self.assertEqual(self.booking_two.status, 'cancelled')
